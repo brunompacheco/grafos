@@ -107,7 +107,7 @@ class Grafo():
     def rotulo(self, v):
         return self.V[v-1]
 
-    def vizinhos(self, v, com_peso=True):
+    def vizinhos(self, v, com_peso=False):
         """ `com_peso` := False requer uma varredura dos vizinhos no caso de
         self.rep == 'listaAdj'.
         """
