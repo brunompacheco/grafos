@@ -20,8 +20,9 @@ class PesoArestas(dict):
             super().__setitem__(key, val)
 
 class Grafo():
-    def __init__(self, V:list, E:List[set], w:PesoArestas, rep='listaAdj', eps=0):
-        """ Grafo não-dirigido e ponderado.
+    def __init__(self, V:list, E:List[set], w:dict, rep='listaAdj',
+                 eps=float('inf')):
+        """ Grafo  ponderado.
 
         Attributes:
             V: Lista dos rótulos dos vértices, seguindo a ordem, mas indexada
@@ -56,7 +57,8 @@ class Grafo():
                 w_e = w[e]
                 u, v = self.e2uv(e)
                 self._grafo[u-1].add((v, w_e))
-                self._grafo[v-1].add((u, w_e))
+                if isinstance(e, set):
+                    self._grafo[v-1].add((u, w_e))
         elif rep == 'matrizAdj':
             self._grafo = [[eps for _ in range(n)] for _ in range(n)]
 
@@ -67,8 +69,9 @@ class Grafo():
                 w_e = w[e]
                 u, v = self.e2uv(e)
                 self._grafo[u-1][v-1] = w_e
-                self._grafo[v-1][u-1] = w_e
-        
+                if isinstance(e, set):
+                    self._grafo[v-1][u-1] = w_e
+
         self._n = n
 
     @property
@@ -130,10 +133,10 @@ class Grafo():
 
             return vizinhos
 
-    def haAresta(self, e:set):
+    def haAresta(self, e):
         return e in self.E
 
-    def peso(self, e:set):
+    def peso(self, e):
         u, v = self.e2uv(e)
         if self.rep == 'matrizAdj':
             return self._grafo[u-1][v-1]
@@ -146,14 +149,19 @@ class Grafo():
 
     @staticmethod
     def e2uv(e):
-        """ Como representamos uma aresta `e` por um set, precisamos acessar
-        seus elementos por um iterável.
+        """ Caso a aresta `e` seja um set (grafo não direcionado), precisamos
+        acessar seus elementos por um iterável.
         """
-        e_ = iter(e)
-        u = next(e_)
-        v = next(e_)
+        if isinstance(e, set):
+            e_ = iter(e)
+            u = next(e_)
+            v = next(e_)
 
-        return u, v
+            return u, v
+        elif isinstance(e, tuple):
+            return e[0], e[1]
+        else:
+            print(f'a aresta {e} não está em um formato adequado')
 
     @classmethod
     def ler(cls, arquivo, rep='listaAdj', eps=0):
@@ -168,14 +176,24 @@ class Grafo():
         vertices = [v.split(' ')[-1] for v in vertices]
         V = vertices
 
-        arestas = linhas[n_vertices+2:]  # n+2 por causa do label `*edges`
+        # define se é um grafo dirigido ou não
+        tipo_grafo = linhas[n_vertices+1]
+
+        arestas = linhas[n_vertices+2:]  # n+2 por causa do label `*edges/arcs`
         arestas = [e.split(' ') for e in arestas]
         E = list()
         w = PesoArestas()
-        for a, b, valor in arestas:
-            e = {int(a), int(b)}
+        for a, b, peso in arestas:
+            if tipo_grafo == '*edges':
+                e = {int(a), int(b)}
+            elif tipo_grafo == '*arcs':
+                e = (int(a), int(b))
+            else:
+                print(f"tipo de aresta {tipo_grafo} não conforme")
+                break
+
             E.append(e)
-            w[e] = float(valor)
+            w[e] = float(peso)
 
         return cls(V, E, w, rep=rep, eps=eps)
 
@@ -208,7 +226,7 @@ if __name__ == '__main__':
 
         assert G.vizinhos(1, com_peso=False) == {2}
         assert G.vizinhos(2, com_peso=False) == {3, 1}
-        assert G.vizinhos(1, com_peso=False) == {2}
+        assert G.vizinhos(3, com_peso=False) == {2}
 
         assert G.haAresta({1, 2}) == True
         assert G.haAresta({2, 1}) == True
@@ -221,4 +239,41 @@ if __name__ == '__main__':
         assert G.peso({2, 1}) == 1.5
         assert G.peso({2, 3}) == 2.0
 
+    for rep in ['listaAdj', 'matrizAdj']:
+        f = io.StringIO(
+            "*vertices 3\n"
+            "1 a\n"
+            "2 b\n"
+            "3 c\n"
+            "*arcs\n"
+            "1 2 1.5\n"
+            "2 3 2\n"
+        )
+        G = Grafo.ler(f, rep=rep)
+        f.close()
+
+        assert G.qtdArestas() == 2
+        assert G.qtdVertices() == 3
+
+        assert G.grau(1) == 1
+        assert G.grau(2) == 1
+        assert G.grau(3) == 0
+
+        assert G.rotulo(1) == 'a'
+        assert G.rotulo(2) == 'b'
+        assert G.rotulo(3) == 'c'
+
+        assert G.vizinhos(1, com_peso=False) == {2}
+        assert G.vizinhos(2, com_peso=False) == {3}
+
+        assert G.haAresta((1, 2)) == True
+        assert G.haAresta((2, 1)) == False
+        assert G.haAresta((2, 3)) == True
+        assert G.haAresta((3, 2)) == False
+        assert G.haAresta((3, 1)) == False
+        assert G.haAresta((1, 3)) == False
+
+        assert G.peso((1, 2)) == 1.5
+        assert G.peso((2, 1)) == 0
+        assert G.peso((2, 3)) == 2.0
     print('Success')
