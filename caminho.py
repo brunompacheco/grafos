@@ -116,4 +116,3 @@ if __name__ == '__main__':
             print(str(v), ":", ','.join(caminho), ";","d =", str(D[v-1]))
     else:
         print(args.alg + ' not implemented')
-

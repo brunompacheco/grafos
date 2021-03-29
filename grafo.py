@@ -276,4 +276,3 @@ if __name__ == '__main__':
         assert G.peso((1, 2)) == 1.5
         assert G.peso((2, 1)) == 0
         assert G.peso((2, 3)) == 2.0
-    print('Success')
