@@ -36,11 +36,11 @@ def get_residual(G: Grafo, f: dict):
 
     return G_f
 
-def edmonds_karp(G_f: Grafo, s: int, t: int, f: dict):
+def edmonds_karp(G_f: Grafo, s: int, t: int):
     # controla se o i-ésimo (-1) vértice já foi visitado
-    C = G.qtdVertices() * [False, ]
+    C = G_f.qtdVertices() * [False, ]
     # antecessor do i-ésimo (-1) vértice
-    A = G.qtdVertices() * [None, ]
+    A = G_f.qtdVertices() * [None, ]
 
     C[s-1] = True
 
@@ -48,8 +48,7 @@ def edmonds_karp(G_f: Grafo, s: int, t: int, f: dict):
     for u in Q: #  u=3
         for v in G_f.vizinhos(u): # v=4
             e = (u, v)
-            if not C[v-1] and G.w[e] - f[e] > 0:
-            # if not C[v-1] and G_f.w[e] > 0:
+            if not C[v-1] and G_f.w[e] > 0:
                 C[v-1] = True
                 A[v-1] = u
 
@@ -72,12 +71,13 @@ def ford_fulkerson(G: Grafo, s: int, t: int):
     for e in G.E:
         f[e] = 0
 
-    p = edmonds_karp(G, s, t, f)
+    G_f = get_residual(G, f)
+    p = edmonds_karp(G_f, s, t)
     while p is not None:
-        G_f = get_residual(G, f)
-
+        # capacidade do caminho aumentante
         c_f_p = min([G_f.w[e] for e in caminho2arestas(p)])
 
+        # atualiza f a partir do caminho aumentante p
         for e in caminho2arestas(p):
             if e in G.E:
                 f[e] += c_f_p
@@ -85,7 +85,8 @@ def ford_fulkerson(G: Grafo, s: int, t: int):
                 u, v = G.e2uv(e)
                 f[(v, u)] -= c_f_p
 
-        p = edmonds_karp(G, s, t, f)
+        G_f = get_residual(G, f)
+        p = edmonds_karp(G_f, s, t)
 
     return f
 
@@ -98,17 +99,21 @@ if __name__ == '__main__':
 
     if args.arquivo == 'teste':
         f = io.StringIO(
-            "*vertices 4\n"
+            "*vertices 6\n"
             "1 a\n"
             "2 b\n"
             "3 c\n"
             "4 d\n"
+            "5 e\n"
+            "6 e\n"
             "*arcs\n"
-            "1 2 5\n"
-            "1 3 10\n"
+            "1 2 10\n"
+            "1 3 5\n"
             "2 4 10\n"
-            "3 4 7\n"
-            "3 2 7\n"
+            "2 5 5\n"
+            "3 4 5\n"
+            "4 6 10\n"
+            "5 6 5\n"
         )
         G = Grafo.ler(f, eps=0)  # capacidade, então eps = 0
         f.close()
