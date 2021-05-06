@@ -92,7 +92,7 @@ def ford_fulkerson(G: Grafo, s: int, t: int):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Ordenação topológica.')
+    parser = argparse.ArgumentParser(description='Fluxo máximo.')
     parser.add_argument('arquivo', metavar='ARQUIVO', type=str)
 
     args = parser.parse_args()
