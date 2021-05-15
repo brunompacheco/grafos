@@ -180,7 +180,7 @@ class Grafo():
         tipo_grafo = linhas[n_vertices+1]
 
         arestas = linhas[n_vertices+2:]  # n+2 por causa do label `*edges/arcs`
-        arestas = [e.split(' ') for e in arestas]
+        arestas = [e.rstrip().split(' ') for e in arestas]
         E = list()
         w = PesoArestas()
         for a, b, peso in arestas:
